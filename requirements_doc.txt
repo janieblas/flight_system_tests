@@ -1,0 +1,246 @@
+================================================================================
+REQUERIMIENTOS DEL SISTEMA - Engine Monitoring System (EMS)
+================================================================================
+
+================================================================================
+1. REQUERIMIENTOS FUNCIONALES
+================================================================================
+
+------------------------------------------------------------------------------
+RF-001: Inicialización del Sistema
+------------------------------------------------------------------------------
+- El sistema debe inicializarse con los siguientes valores por defecto:
+  - Temperatura: 27°C (ambiente)
+  - Presión: 0 PSI
+  - RPM: 0
+  - Nivel de combustible: 100%
+  - Estado del motor: APAGADO
+
+------------------------------------------------------------------------------
+RF-002: Encendido del Motor
+------------------------------------------------------------------------------
+- El motor debe encender exitosamente si:
+  - El nivel de combustible es mayor a 0%
+- Al encender, el sistema debe:
+  - Cambiar estado a ENCENDIDO
+  - Establecer RPM en 1000
+  - Establecer presión en 45 PSI
+  - Establecer temperatura en 85°C
+
+------------------------------------------------------------------------------
+RF-003: Fallo de Encendido
+------------------------------------------------------------------------------
+- El motor NO debe encender si:
+  - El nivel de combustible es 0%
+- El estado debe permanecer APAGADO
+
+------------------------------------------------------------------------------
+RF-004: Apagado del Motor
+------------------------------------------------------------------------------
+- Al apagar el motor, el sistema debe:
+  - Cambiar estado a APAGADO
+  - Resetear RPM a 0
+  - Resetear presión a 0 PSI
+  - Resetear temperatura a 27°C (ambiente)
+  - Mantener el nivel de combustible actual
+
+------------------------------------------------------------------------------
+RF-005: Actualización de Parámetros
+------------------------------------------------------------------------------
+- El sistema debe permitir actualizar parámetros solo si el motor está ENCENDIDO
+- Parámetros actualizables:
+  - Temperatura (°C)
+  - Presión (PSI)
+  - RPM
+  - Nivel de combustible (%)
+- Si el motor está APAGADO, debe rechazar la actualización
+
+------------------------------------------------------------------------------
+RF-006: Verificación de Estado del Motor
+------------------------------------------------------------------------------
+- El sistema debe proporcionar un método is_running() que retorne:
+  - True si el motor está ENCENDIDO
+  - False si el motor está APAGADO
+
+------------------------------------------------------------------------------
+RF-007: Reporte de Estado
+------------------------------------------------------------------------------
+- El sistema debe proporcionar un reporte de estado que incluya:
+  - Estado actual (ENCENDIDO/APAGADO)
+  - Temperatura actual
+  - Presión actual
+  - RPM actual
+  - Nivel de combustible actual
+
+================================================================================
+2. REQUERIMIENTOS DE MONITOREO Y RANGOS
+================================================================================
+
+------------------------------------------------------------------------------
+RF-008: Monitoreo de Temperatura
+------------------------------------------------------------------------------
+- Rango NORMAL (OK): 80°C - 120°C
+- Rango WARNING: 70°C - 79°C o 121°C - 130°C
+- Rango CRITICAL: < 70°C o > 130°C
+
+------------------------------------------------------------------------------
+RF-009: Monitoreo de Presión
+------------------------------------------------------------------------------
+- Rango NORMAL (OK): 40 PSI - 80 PSI
+- Rango WARNING: 30 PSI - 39 PSI o 81 PSI - 90 PSI
+- Rango CRITICAL: < 30 PSI o > 90 PSI
+
+------------------------------------------------------------------------------
+RF-010: Monitoreo de RPM
+------------------------------------------------------------------------------
+- Rango NORMAL (OK): 1000 RPM - 5000 RPM
+- Rango WARNING: 800 RPM - 999 RPM o 5001 RPM - 5500 RPM
+- Rango CRITICAL: < 800 RPM o > 5500 RPM
+
+------------------------------------------------------------------------------
+RF-011: Monitoreo de Combustible
+------------------------------------------------------------------------------
+- Rango NORMAL (OK): > 20%
+- Rango WARNING: 10% - 20%
+- Rango CRITICAL: < 10%
+
+------------------------------------------------------------------------------
+RF-012: Método de Verificación de Estado
+------------------------------------------------------------------------------
+- El método motor_status() debe:
+  - Evaluar todos los parámetros contra sus rangos
+  - Retornar un diccionario con el estado de cada parámetro
+  - Formato: {'temperature': 'OK', 'pressure': 'WARNING', ...}
+
+================================================================================
+3. REQUERIMIENTOS DE LOGGING
+================================================================================
+
+------------------------------------------------------------------------------
+RF-013: Logging de Encendido Exitoso
+------------------------------------------------------------------------------
+- Al encender exitosamente, debe generar:
+  - Log DEBUG: Estado antes de encender (gas, status)
+  - Log INFO: "Motor encendido correctamente"
+  - Log DEBUG: Parámetros iniciales (RPM, Temp, Presión)
+
+------------------------------------------------------------------------------
+RF-014: Logging de Fallo de Encendido
+------------------------------------------------------------------------------
+- Al fallar el encendido por falta de combustible:
+  - Log ERROR: "Fallo crítico: Intento de encender sin combustible"
+
+------------------------------------------------------------------------------
+RF-015: Logging de Actualización de Parámetros
+------------------------------------------------------------------------------
+- Al actualizar parámetros con motor encendido:
+  - Log DEBUG: Valores nuevos a actualizar
+  - Log INFO: "Parámetros actualizados correctamente"
+
+------------------------------------------------------------------------------
+RF-016: Logging de Actualización Rechazada
+------------------------------------------------------------------------------
+- Al intentar actualizar con motor apagado:
+  - Log WARNING: "Intento de actualizar parámetros con motor apagado"
+
+------------------------------------------------------------------------------
+RF-017: Logging de Monitoreo de Estado
+------------------------------------------------------------------------------
+- Al ejecutar motor_status():
+  - Log DEBUG: Para parámetros en rango normal
+  - Log WARNING: Para parámetros fuera de rango óptimo
+  - Log CRITICAL: Para parámetros en nivel crítico
+- Formato de log debe incluir el nombre del parámetro y su valor actual
+
+================================================================================
+4. REQUERIMIENTOS NO FUNCIONALES
+================================================================================
+
+------------------------------------------------------------------------------
+RNF-001: Manejo de Estado
+------------------------------------------------------------------------------
+- El sistema debe mantener consistencia de estado en todo momento
+- Las transiciones de estado deben ser atómicas
+
+------------------------------------------------------------------------------
+RNF-002: Validación de Datos
+------------------------------------------------------------------------------
+- El sistema debe aceptar valores numéricos para todos los parámetros
+- No se requiere validación de rangos en la entrada (se confía en el llamador)
+
+------------------------------------------------------------------------------
+RNF-003: Formato de Logs
+------------------------------------------------------------------------------
+- Todos los logs deben incluir:
+  - Timestamp
+  - Nombre del módulo
+  - Nivel de log
+  - Mensaje descriptivo
+
+------------------------------------------------------------------------------
+RNF-004: Testabilidad
+------------------------------------------------------------------------------
+- El sistema debe ser completamente testeable sin dependencias externas
+- Los logs deben ser verificables en tests automatizados
+
+================================================================================
+CASOS LÍMITE (EDGE CASES) A CONSIDERAR
+================================================================================
+
+1. Encender con exactamente 0% de combustible
+2. Valores en los límites exactos de los rangos (ej: temp=80°C, temp=120°C)
+3. Actualizar parámetros múltiples veces consecutivas
+4. Encender y apagar repetidamente
+5. Valores extremos (temperatura negativa, RPM muy alto)
+
+================================================================================
+MATRIZ DE TRAZABILIDAD (para tus test cases)
+================================================================================
+
+Requerimiento | Prioridad | Test Case Sugerido
+--------------|-----------|---------------------------------------------------
+RF-001        | Alta      | test_inicializacion_valores_default
+RF-002        | Alta      | test_motor_enciende_con_combustible
+RF-003        | Alta      | test_motor_no_enciende_sin_combustible
+RF-004        | Alta      | test_motor_apaga_correctamente
+RF-005        | Alta      | test_actualizar_parametros_motor_encendido
+RF-005        | Alta      | test_actualizar_parametros_motor_apagado
+RF-006        | Alta      | test_is_running_motor_encendido
+RF-006        | Alta      | test_is_running_motor_apagado
+RF-007        | Media     | test_get_status_muestra_informacion_completa
+RF-008        | Media     | test_temperatura_rango_ok
+RF-008        | Media     | test_temperatura_rango_warning
+RF-008        | Media     | test_temperatura_rango_critical
+RF-009        | Media     | test_presion_rango_ok
+RF-009        | Media     | test_presion_rango_warning
+RF-009        | Media     | test_presion_rango_critical
+RF-010        | Media     | test_rpm_rango_ok
+RF-010        | Media     | test_rpm_rango_warning
+RF-010        | Media     | test_rpm_rango_critical
+RF-011        | Media     | test_combustible_rango_ok
+RF-011        | Media     | test_combustible_rango_warning
+RF-011        | Media     | test_combustible_rango_critical
+RF-012        | Alta      | test_motor_status_retorna_diccionario
+RF-012        | Alta      | test_motor_status_evalua_todos_parametros
+RF-013        | Media     | test_log_encendido_exitoso_info
+RF-013        | Media     | test_log_encendido_exitoso_debug
+RF-014        | Media     | test_log_fallo_encendido_error
+RF-015        | Media     | test_log_actualizacion_exitosa
+RF-016        | Media     | test_log_actualizacion_rechazada_warning
+RF-017        | Media     | test_log_parametros_normales_debug
+RF-017        | Media     | test_log_parametros_warning
+RF-017        | Media     | test_log_parametros_critical
+
+================================================================================
+NOTAS ADICIONALES
+================================================================================
+
+- Cada test case debe seguir el patrón AAA (Arrange-Act-Assert)
+- Los tests de logging deben usar caplog o verificar el archivo de log
+- Los tests deben ser independientes entre sí
+- Se recomienda usar fixtures para configuración común
+- Los edge cases deben tener tests específicos
+
+================================================================================
+FIN DEL DOCUMENTO
+================================================================================

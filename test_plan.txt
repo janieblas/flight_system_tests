@@ -1,0 +1,543 @@
+================================================================================
+TEST PLAN - Engine Monitoring System (EMS)
+================================================================================
+
+Versión: 1.0
+Fecha: 08 de Febrero, 2026
+Preparado por: [Tu Nombre]
+Proyecto: Flight System - Engine Monitoring System
+
+================================================================================
+1. INTRODUCCIÓN 
+================================================================================
+
+1.1 PROPÓSITO
+-------------
+Este documento describe el plan de pruebas para el Engine Monitoring System 
+(EMS). El objetivo es verificar que el sistema cumple con todos los 
+requerimientos funcionales especificados, con énfasis en la validación de 
+logs generados durante las operaciones.
+
+1.2 ALCANCE
+-----------
+Cubre las pruebas de:
+- Inicialización del sistema
+- Operaciones básicas del motor (encendido/apagado)
+- Actualización de parámetros
+- Verificación de estados
+- Generación y contenido de logs
+
+Fuera de alcance:
+- Pruebas de rendimiento
+- Pruebas de carga
+- Integración con otros sistemas de vuelo
+
+1.3 ESTRATEGIA DE PRUEBAS
+--------------------------
+Se utilizará verificación de logs como método principal de validación:
+- Los logs serán generados en archivo: logs/test_engine.log
+- Cada test verificará tanto el comportamiento como los logs generados
+- Se utilizará pytest como framework de testing
+- Los logs se capturarán y verificarán en cada caso de prueba
+
+================================================================================
+2. REQUERIMIENTOS A PROBAR
+================================================================================
+
+Los siguientes requerimientos funcionales serán probados:
+- RF-001: Inicialización del Sistema
+- RF-002: Encendido del Motor
+- RF-003: Fallo de Encendido
+- RF-004: Apagado del Motor
+- RF-005: Actualización de Parámetros
+- RF-006: Verificación de Estado del Motor
+- RF-007: Reporte de Estado
+
+================================================================================
+3. CASOS DE PRUEBA
+================================================================================
+
+------------------------------------------------------------------------------
+TC-001: Verificar Inicialización del Sistema
+------------------------------------------------------------------------------
+Requerimiento: RF-001
+Prioridad: Alta
+Precondiciones: Ninguna
+
+Pasos:
+1. Crear una instancia de EngineMonitoringSystem
+2. Leer el archivo de log generado
+
+Datos de Entrada: Ninguno
+
+Resultados Esperados:
+- Temperatura = 27°C
+- Presión = 0 PSI
+- RPM = 0
+- Nivel de combustible = 100%
+- Estado = APAGADO (is_running() retorna False)
+- Log archivo: No debe contener errores de inicialización
+
+Método de Verificación:
+- Assert sobre atributos del objeto
+- Lectura del archivo logs/test_engine.log
+
+------------------------------------------------------------------------------
+TC-002: Verificar Encendido Exitoso del Motor
+------------------------------------------------------------------------------
+Requerimiento: RF-002
+Prioridad: Alta
+Precondiciones: Motor recién inicializado (gas_level = 100%)
+
+Pasos:
+1. Crear una instancia de EngineMonitoringSystem
+2. Llamar al método motor_on()
+3. Leer el archivo de log generado
+
+Datos de Entrada: gas_level > 0%
+
+Resultados Esperados:
+- Estado = ENCENDIDO (is_running() retorna True)
+- RPM = 1000
+- Presión = 45 PSI
+- Temperatura = 85°C
+- Log DEBUG: Debe contener "Estado actual antes de encender: Gas=100%"
+- Log INFO: Debe contener "Motor encendido correctamente"
+- Log DEBUG: Debe contener "Parámetros iniciales: RPM=1000, Temp=85°C, Presión=45 PSI"
+
+Método de Verificación:
+- Assert sobre atributos del objeto
+- Búsqueda de strings específicos en logs/test_engine.log
+- Verificación de niveles de log (DEBUG, INFO)
+
+------------------------------------------------------------------------------
+TC-003: Verificar Fallo de Encendido sin Combustible
+------------------------------------------------------------------------------
+Requerimiento: RF-003
+Prioridad: Alta
+Precondiciones: Ninguna
+
+Pasos:
+1. Crear una instancia de EngineMonitoringSystem
+2. Establecer gas_level = 0
+3. Llamar al método motor_on()
+4. Leer el archivo de log generado
+
+Datos de Entrada: gas_level = 0%
+
+Resultados Esperados:
+- Estado = APAGADO (is_running() retorna False)
+- RPM = 0
+- Presión = 0 PSI
+- Temperatura = 27°C (sin cambios)
+- Log ERROR: Debe contener "Fallo crítico: Intento de encender sin combustible"
+- No debe aparecer log INFO de encendido exitoso
+
+Método de Verificación:
+- Assert sobre is_running() == False
+- Assert sobre valores de parámetros
+- Búsqueda de string "ERROR" y mensaje específico en log
+- Verificación que NO existe mensaje de éxito
+
+------------------------------------------------------------------------------
+TC-004: Verificar Apagado del Motor
+------------------------------------------------------------------------------
+Requerimiento: RF-004
+Prioridad: Alta
+Precondiciones: Motor encendido previamente
+
+Pasos:
+1. Crear una instancia de EngineMonitoringSystem
+2. Llamar al método motor_on() para encender
+3. Guardar el nivel de combustible actual
+4. Llamar al método motor_off()
+5. Leer el archivo de log generado
+
+Datos de Entrada: Motor previamente encendido con gas_level conocido
+
+Resultados Esperados:
+- Estado = APAGADO (is_running() retorna False)
+- RPM = 0
+- Presión = 0 PSI
+- Temperatura = 27°C
+- Nivel de combustible = sin cambios (mantiene el valor previo)
+- Log: Debe reflejar transición de ENCENDIDO a APAGADO
+
+Método de Verificación:
+- Assert sobre is_running() == False
+- Assert sobre valores reseteados
+- Assert que gas_level no cambió
+- Verificación de secuencia en logs (encendido → apagado)
+
+------------------------------------------------------------------------------
+TC-005: Verificar Actualización de Parámetros con Motor Encendido
+------------------------------------------------------------------------------
+Requerimiento: RF-005
+Prioridad: Alta
+Precondiciones: Motor encendido
+
+Pasos:
+1. Crear una instancia de EngineMonitoringSystem
+2. Llamar al método motor_on()
+3. Llamar al método update_parameters(100, 50, 2500, 80)
+4. Leer el archivo de log generado
+
+Datos de Entrada: 
+- Temperatura: 100°C
+- Presión: 50 PSI
+- RPM: 2500
+- gas_level: 80%
+
+Resultados Esperados:
+- Temperatura = 100°C
+- Presión = 50 PSI
+- RPM = 2500
+- gas_level = 80%
+- Log DEBUG: Debe contener "Actualizando parámetros: Temp=100, Presión=50, RPM=2500, Gas=80"
+- Log INFO: Debe contener "Parámetros actualizados correctamente"
+
+Método de Verificación:
+- Assert sobre todos los parámetros actualizados
+- Búsqueda de mensajes específicos en log
+- Verificación de niveles DEBUG e INFO en orden correcto
+
+------------------------------------------------------------------------------
+TC-006: Verificar Rechazo de Actualización con Motor Apagado
+------------------------------------------------------------------------------
+Requerimiento: RF-005
+Prioridad: Alta
+Precondiciones: Motor apagado
+
+Pasos:
+1. Crear una instancia de EngineMonitoringSystem (motor apagado por defecto)
+2. Llamar al método update_parameters(100, 50, 2500, 80)
+3. Leer el archivo de log generado
+
+Datos de Entrada:
+- Temperatura: 100°C
+- Presión: 50 PSI
+- RPM: 2500
+- gas_level: 80%
+
+Resultados Esperados:
+- Temperatura = 27°C (sin cambios)
+- Presión = 0 PSI (sin cambios)
+- RPM = 0 (sin cambios)
+- gas_level = 100% (sin cambios)
+- Log DEBUG: Debe contener "Actualizando parámetros: Temp=100, Presión=50, RPM=2500, Gas=80"
+- Log WARNING: Debe contener "Intento de actualizar parámetros con motor apagado"
+- No debe aparecer log INFO de actualización exitosa
+
+Método de Verificación:
+- Assert que todos los parámetros permanecen en valores iniciales
+- Búsqueda de mensaje WARNING específico en log
+- Verificación que NO existe mensaje INFO de éxito
+
+------------------------------------------------------------------------------
+TC-007: Verificar Método is_running() con Motor Encendido
+------------------------------------------------------------------------------
+Requerimiento: RF-006
+Prioridad: Alta
+Precondiciones: Ninguna
+
+Pasos:
+1. Crear una instancia de EngineMonitoringSystem
+2. Llamar al método motor_on()
+3. Llamar al método is_running()
+4. Leer el archivo de log generado
+
+Datos de Entrada: Ninguno
+
+Resultados Esperados:
+- is_running() retorna True
+- Log: Debe reflejar encendido exitoso
+
+Método de Verificación:
+- Assert is_running() == True
+- Verificación de logs relacionados al encendido
+
+------------------------------------------------------------------------------
+TC-008: Verificar Método is_running() con Motor Apagado
+------------------------------------------------------------------------------
+Requerimiento: RF-006
+Prioridad: Alta
+Precondiciones: Ninguna
+
+Pasos:
+1. Crear una instancia de EngineMonitoringSystem
+2. Llamar al método is_running() (sin encender)
+3. Leer el archivo de log generado
+
+Datos de Entrada: Ninguno
+
+Resultados Esperados:
+- is_running() retorna False
+- Log: No debe contener errores
+
+Método de Verificación:
+- Assert is_running() == False
+- Verificación que log no contiene mensajes de error
+
+------------------------------------------------------------------------------
+TC-009: Verificar Reporte de Estado Completo
+------------------------------------------------------------------------------
+Requerimiento: RF-007
+Prioridad: Media
+Precondiciones: Motor encendido con parámetros actualizados
+
+Pasos:
+1. Crear una instancia de EngineMonitoringSystem
+2. Llamar al método motor_on()
+3. Llamar al método update_parameters(95, 60, 3000, 75)
+4. Llamar al método get_status()
+5. Leer el archivo de log generado
+
+Datos de Entrada: Parámetros actualizados conocidos
+
+Resultados Esperados:
+- get_status() retorna un string que contiene:
+  - "Estado: ENCENDIDO"
+  - "Temperatura: 95°C"
+  - "Presión: 60 PSI"
+  - "RPM: 3000"
+  - "Combustible: 75%"
+- Log: Debe reflejar operaciones previas (encendido + actualización)
+
+Método de Verificación:
+- Assert que el string retornado contiene todos los elementos
+- Búsqueda de substrings específicos
+- Verificación de logs previos
+
+------------------------------------------------------------------------------
+TC-010: Verificar Múltiples Ciclos de Encendido/Apagado
+------------------------------------------------------------------------------
+Requerimiento: RF-002, RF-004
+Prioridad: Media
+Precondiciones: Ninguna
+
+Pasos:
+1. Crear una instancia de EngineMonitoringSystem
+2. Repetir 3 veces:
+   a. Llamar motor_on()
+   b. Verificar is_running() == True
+   c. Llamar motor_off()
+   d. Verificar is_running() == False
+3. Leer el archivo de log generado
+
+Datos de Entrada: Ninguno
+
+Resultados Esperados:
+- Cada ciclo debe completarse correctamente
+- Estado final: APAGADO
+- Log: Debe contener 3 secuencias de encendido y 3 de apagado
+- Log INFO: Debe aparecer "Motor encendido correctamente" 3 veces
+
+Método de Verificación:
+- Assert después de cada operación
+- Conteo de ocurrencias de mensajes en log
+- Verificación de secuencia correcta
+
+================================================================================
+4. ENTORNO DE PRUEBAS
+================================================================================
+
+4.1 HARDWARE
+------------
+- No aplica (software puro)
+
+4.2 SOFTWARE
+------------
+- Sistema Operativo: Linux Ubuntu 24
+- Python: 3.10+
+- Framework de Testing: pytest 8.0+
+- Módulos Python: logging (estándar)
+
+4.3 ARCHIVOS Y DIRECTORIOS
+---------------------------
+- Código fuente: src/EMS.py
+- Tests: tests/test_EMS.py
+- Logs de prueba: logs/test_engine.log
+- Reportes: reports/
+
+4.4 CONFIGURACIÓN DE LOGGING
+-----------------------------
+```python
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    filename='logs/test_engine.log',
+    filemode='w'  # Sobrescribir en cada test
+)
+```
+
+================================================================================
+5. CRITERIOS DE ACEPTACIÓN
+================================================================================
+
+5.1 CRITERIOS DE PASO
+---------------------
+Un test case PASA si:
+✓ Todos los asserts son exitosos
+✓ Los logs contienen los mensajes esperados
+✓ Los niveles de log son correctos (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+✓ No hay logs de error inesperados
+✓ Los valores de parámetros coinciden con lo esperado
+
+5.2 CRITERIOS DE FALLO
+----------------------
+Un test case FALLA si:
+✗ Algún assert falla
+✗ Los logs no contienen mensajes esperados
+✗ Aparecen logs de nivel ERROR o CRITICAL inesperados
+✗ Los valores de parámetros no coinciden
+✗ El archivo de log no se genera
+
+5.3 COBERTURA MÍNIMA
+--------------------
+- 100% de los requerimientos funcionales deben tener al menos un test
+- Cobertura de código: >= 90%
+- Todos los métodos públicos deben ser probados
+
+================================================================================
+6. PROCEDIMIENTO DE EJECUCIÓN
+================================================================================
+
+6.1 PREPARACIÓN
+---------------
+1. Asegurar que el entorno está configurado correctamente
+2. Limpiar logs previos: rm -f logs/test_engine.log
+3. Verificar que pytest está instalado: pytest --version
+
+6.2 EJECUCIÓN
+-------------
+Ejecutar todos los tests:
+```bash
+pytest tests/test_EMS.py -v
+```
+
+Ejecutar un test específico:
+```bash
+pytest tests/test_EMS.py::TestClass::test_name -v
+```
+
+Generar reporte HTML:
+```bash
+pytest tests/test_EMS.py -v --html=reports/test_report.html --self-contained-html
+```
+
+6.3 POST-EJECUCIÓN
+------------------
+1. Revisar el reporte de pytest
+2. Revisar los logs generados en logs/test_engine.log
+3. Documentar cualquier fallo
+4. Archivar logs y reportes con timestamp
+
+================================================================================
+7. ESTRUCTURA DE TEST CASES EN CÓDIGO
+================================================================================
+
+Cada test case debe seguir esta estructura:
+
+```python
+class TestNombreDelGrupo:
+    
+    @pytest.fixture(autouse=True)
+    def setup_logging(self):
+        """Configurar logging antes de cada test"""
+        logging.root.handlers = []
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            filename='logs/test_engine.log',
+            filemode='w'
+        )
+        yield
+        logging.shutdown()
+    
+    def test_nombre_descriptivo(self):
+        """Docstring explicando qué prueba este test"""
+        # ARRANGE (Preparar)
+        motor = EngineMonitoringSystem()
+        
+        # ACT (Actuar)
+        motor.motor_on()
+        logging.shutdown()
+        
+        # ASSERT - Verificar comportamiento
+        assert motor.is_running() == True
+        assert motor.RPM == 1000
+        
+        # ASSERT - Verificar logs
+        with open('logs/test_engine.log', 'r') as f:
+            log_content = f.read()
+        
+        assert "Motor encendido correctamente" in log_content
+        assert "INFO" in log_content
+```
+
+================================================================================
+8. GESTIÓN DE DEFECTOS
+================================================================================
+
+8.1 SEVERIDAD
+-------------
+- CRÍTICA: El sistema no funciona, bloquea otras pruebas
+- ALTA: Funcionalidad principal no cumple requerimientos
+- MEDIA: Funcionalidad secundaria tiene problemas
+- BAJA: Problemas cosméticos o de logs
+
+8.2 DOCUMENTACIÓN
+-----------------
+Cada defecto debe documentar:
+- ID del Test Case que falló
+- Requerimiento afectado
+- Pasos para reproducir
+- Comportamiento esperado vs. actual
+- Logs relevantes
+- Captura de pantalla del reporte (si aplica)
+
+================================================================================
+9. MÉTRICAS Y REPORTES
+================================================================================
+
+9.1 MÉTRICAS A RECOLECTAR
+--------------------------
+- Total de tests ejecutados
+- Tests pasados / fallidos
+- Porcentaje de éxito
+- Tiempo de ejecución
+- Cobertura de código
+- Número de defectos por severidad
+
+9.2 FRECUENCIA DE EJECUCIÓN
+----------------------------
+- Por cada commit: Tests unitarios básicos (TC-001 a TC-006)
+- Diariamente: Suite completa
+- Pre-release: Suite completa + tests de regresión
+
+================================================================================
+10. RIESGOS Y MITIGACIONES
+================================================================================
+
+Riesgo: El archivo de log no se genera correctamente
+Mitigación: Verificar permisos de escritura en carpeta logs/
+
+Riesgo: Los logs se mezclan entre tests
+Mitigación: Usar filemode='w' para sobrescribir y logging.shutdown()
+
+Riesgo: Tests fallan por problemas de configuración
+Mitigación: Usar fixture autouse=True para configuración consistente
+
+================================================================================
+11. APROBACIONES
+================================================================================
+
+Test Plan preparado por: _______________________  Fecha: __________
+
+Test Plan revisado por: _______________________  Fecha: __________
+
+Test Plan aprobado por: _______________________  Fecha: __________
+
+================================================================================
+FIN DEL TEST PLAN
+================================================================================

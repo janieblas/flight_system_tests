@@ -1,0 +1,19 @@
+2026-02-10 16:18:30,536 - src.EMS - INFO - Sistema inicializado - Temp=27°C, Presión=0 PSI, RPM=0, Combustible=100%, Estado=APAGADO
+2026-02-10 16:18:30,536 - src.EMS - DEBUG - Estado actual antes de encender: Gas=100%, Status=0
+2026-02-10 16:18:30,536 - src.EMS - INFO - Motor encendido correctamente
+2026-02-10 16:18:30,536 - src.EMS - DEBUG - Parámetros iniciales: RPM=1000, Temp=85°C, Presión=45 PSI
+2026-02-10 16:18:30,536 - src.EMS - INFO - Estado actual - ENCENDIDO: Temp=85°C, Presión=45 PSI, RPM=1000, Combustible=100%
+2026-02-10 16:18:30,536 - src.EMS - INFO - Motor apagado correctamente
+2026-02-10 16:18:30,536 - src.EMS - INFO - Estado actual - APAGADO: Temp=27°C, Presión=0 PSI, RPM=0, Combustible=100%
+2026-02-10 16:18:30,536 - src.EMS - DEBUG - Estado actual antes de encender: Gas=100%, Status=0
+2026-02-10 16:18:30,536 - src.EMS - INFO - Motor encendido correctamente
+2026-02-10 16:18:30,536 - src.EMS - DEBUG - Parámetros iniciales: RPM=1000, Temp=85°C, Presión=45 PSI
+2026-02-10 16:18:30,536 - src.EMS - INFO - Estado actual - ENCENDIDO: Temp=85°C, Presión=45 PSI, RPM=1000, Combustible=100%
+2026-02-10 16:18:30,536 - src.EMS - INFO - Motor apagado correctamente
+2026-02-10 16:18:30,536 - src.EMS - INFO - Estado actual - APAGADO: Temp=27°C, Presión=0 PSI, RPM=0, Combustible=100%
+2026-02-10 16:18:30,536 - src.EMS - DEBUG - Estado actual antes de encender: Gas=100%, Status=0
+2026-02-10 16:18:30,536 - src.EMS - INFO - Motor encendido correctamente
+2026-02-10 16:18:30,536 - src.EMS - DEBUG - Parámetros iniciales: RPM=1000, Temp=85°C, Presión=45 PSI
+2026-02-10 16:18:30,536 - src.EMS - INFO - Estado actual - ENCENDIDO: Temp=85°C, Presión=45 PSI, RPM=1000, Combustible=100%
+2026-02-10 16:18:30,537 - src.EMS - INFO - Motor apagado correctamente
+2026-02-10 16:18:30,537 - src.EMS - INFO - Estado actual - APAGADO: Temp=27°C, Presión=0 PSI, RPM=0, Combustible=100%
