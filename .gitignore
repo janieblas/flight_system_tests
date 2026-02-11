@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+reports/
+logs/
+jenkins_2.479.3_all.deb
+*.log
