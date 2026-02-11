@@ -9,3 +9,5 @@ gazebo9@gazebo9:~/Desktop/flight_system_pytest$ sudo cat /var/lib/jenkins/secret
 
 gazebo9@gazebo9:~/Desktop/flight_system_pytest$ hostname -I
 10.0.2.15 fd17:625c:f037:2:4c4a:4b5b:bb45:30ea fd17:625c:f037:2:2fb4:a30f:e820:aa87 
+
+cambios
